@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+python-multipart
+tortoise-orm
+aiosqlite # or asyncpg for PostgreSQL
+python-jose
+passlib[bcrypt]
+aiofiles
+pydantic
+python-dotenv
