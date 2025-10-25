@@ -31,6 +31,7 @@ def create_access_token(subject: str, expires_delta: int = None):
 
 def decode_token(token: str):
     payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+    print(payload)
     return payload
 
 

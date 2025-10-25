@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Form, Query
 from typing import List
 import os
 from backend.schemas.post_schemas import PostCreate, PostOut
@@ -6,19 +6,21 @@ from backend.models.post_models import Post
 from backend.routers.auth import get_current_user
 from backend.config import settings
 from backend.core.permissions import has_admin_permissions
+from backend.core.paginations import paginate
+# from backend.schemas.pagination_schemas import PaginatedResponse
 import aiofiles
 
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
 
-@router.get('/', response_model=List[PostOut])
-async def get_posts(current_user=Depends(get_current_user)):
+# @router.get('/', response_model=List[PostOut])
+@router.get('/')
+async def get_posts(current_user=Depends(get_current_user), start: int = Query(0, ge=0), limit: int = Query(10, le=100),):
     if current_user.role not in ['admin', 'super_admin', 'moderator']:
-        videos = await Post.filter(is_approved=True).order_by('-created_at').all()
+        return await paginate(Post, start=start, limit=limit, filters={"is_approved": True}, order_by=['-created_at'])
     else:
-        videos = await Post.all().order_by('-created_at')
-    return videos
+        return await paginate(Post, start=start, limit=limit, order_by=['-created_at'])
 
 
 async def post_create_form(
@@ -49,10 +51,9 @@ async def upload_post(metadata: PostCreate = Depends(post_create_form), file: Up
     return video
 
 
-@router.get('/pending', response_model=List[PostOut])
-async def pending_posts(current_user=Depends(has_admin_permissions)):
-    videos = await Post.filter(is_approved=False).all()
-    return videos
+@router.get('/pending')
+async def pending_posts(current_user=Depends(has_admin_permissions), start: int = Query(0, ge=0), limit: int = Query(10, le=100),):
+    return await paginate(Post, start=start, limit=limit, filters={"is_approved": False}, order_by=['-created_at'])
 
 
 @router.put('/{video_id}/approve')
